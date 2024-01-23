@@ -17,16 +17,10 @@ public abstract class AbstractTokensProducer {
 
     protected boolean earlyTokenAcquisition = true;
 
-    private final AtomicBoolean forceNewTokens = new AtomicBoolean(false);
-
     @Inject
     public OidcClientsConfig oidcClientsConfig;
 
     final TokensHelper tokensHelper = new TokensHelper();
-
-    public void clearTokens() {
-        forceNewTokens.set(true);
-    }
 
     @PostConstruct
     public void init() {
@@ -52,7 +46,7 @@ public abstract class AbstractTokensProducer {
     }
 
     public Uni<Tokens> getTokens() {
-        return tokensHelper.getTokens(oidcClient, forceNewTokens.get()).invoke(() -> forceNewTokens.set(false));
+        return tokensHelper.getTokens(oidcClient, isForceNewTokens());
     }
 
     public Tokens awaitTokens() {
@@ -65,5 +59,13 @@ public abstract class AbstractTokensProducer {
      */
     protected Optional<String> clientId() {
         return Optional.empty();
+    }
+
+    /**
+     * @return return {@code true} if you need to force a new set of tokens, discarding
+     *         previously obtained access, id and refresh tokens.
+     */
+    protected boolean isForceNewTokens() {
+        return false;
     }
 }

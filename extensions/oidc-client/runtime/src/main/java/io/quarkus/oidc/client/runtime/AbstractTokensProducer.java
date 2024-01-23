@@ -17,10 +17,16 @@ public abstract class AbstractTokensProducer {
 
     protected boolean earlyTokenAcquisition = true;
 
+    private final AtomicBoolean forceNewTokens = new AtomicBoolean(false);
+
     @Inject
     public OidcClientsConfig oidcClientsConfig;
 
     final TokensHelper tokensHelper = new TokensHelper();
+
+    public void clearTokens() {
+        forceNewTokens.set(true);
+    }
 
     @PostConstruct
     public void init() {
@@ -46,7 +52,7 @@ public abstract class AbstractTokensProducer {
     }
 
     public Uni<Tokens> getTokens() {
-        return tokensHelper.getTokens(oidcClient);
+        return tokensHelper.getTokens(oidcClient, forceNewTokens.get()).invoke(() -> forceNewTokens.set(false));
     }
 
     public Tokens awaitTokens() {

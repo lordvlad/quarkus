@@ -20,14 +20,14 @@ public class TokensHelper {
         tokenRequestStateUpdater.set(this, new TokenRequestState(oidcClient.getTokens().await().indefinitely()));
     }
 
-    public Uni<Tokens> getTokens(OidcClient oidcClient) {
+    public Uni<Tokens> getTokens(OidcClient oidcClient, boolean forceNewTokens) {
         TokenRequestState currentState = null;
         TokenRequestState newState = null;
         //if the tokens are expired we refresh them in an async manner
         //we use CAS to make sure we only make a single request
         for (;;) {
             currentState = tokenRequestStateUpdater.get(this);
-            if (currentState == null) {
+            if (forceNewTokens || currentState == null) {
                 //init the initial state
                 //note that this can still happen at runtime as if there is an error then the state will be null
                 newState = new TokenRequestState(prepareUni(oidcClient.getTokens()));

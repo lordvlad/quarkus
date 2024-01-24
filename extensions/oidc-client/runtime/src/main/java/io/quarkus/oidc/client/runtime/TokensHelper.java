@@ -27,7 +27,7 @@ public class TokensHelper {
         //we use CAS to make sure we only make a single request
         for (;;) {
             currentState = tokenRequestStateUpdater.get(this);
-            if (forceNewTokens || currentState == null) {
+            if (currentState == null) {
                 //init the initial state
                 //note that this can still happen at runtime as if there is an error then the state will be null
                 newState = new TokenRequestState(prepareUni(oidcClient.getTokens()));
@@ -39,9 +39,9 @@ public class TokensHelper {
                 return currentState.tokenUni;
             } else {
                 Tokens tokens = currentState.tokens;
-                if (tokens.isAccessTokenExpired() || tokens.isAccessTokenWithinRefreshInterval()) {
+                if (forceNewTokens || tokens.isAccessTokenExpired() || tokens.isAccessTokenWithinRefreshInterval()) {
                     newState = new TokenRequestState(
-                            prepareUni((tokens.getRefreshToken() != null && !tokens.isRefreshTokenExpired())
+                            prepareUni((!forceNewTokens && tokens.getRefreshToken() != null && !tokens.isRefreshTokenExpired())
                                     ? oidcClient.refreshTokens(tokens.getRefreshToken())
                                     : oidcClient.getTokens()));
                     if (tokenRequestStateUpdater.compareAndSet(this, currentState, newState)) {
